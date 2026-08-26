@@ -16,4 +16,14 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=1ebbd3e34237af26da5dc08a4e440464"
 SRC_URI = "git://github.com/wolfSSL/wolfHSM.git;protocol=https;branch=main"
 SRCREV ?= "4aeecb2c35686bd4daeb40b3537500d15a93aff9"
 
-S = "${WORKDIR}/git"
+# Newer releases (styhead+/wrynose) unpack into ${UNPACKDIR} and name the git
+# checkout after the recipe; oe-core there rejects S = "${WORKDIR}/git"
+# outright. Older releases (through scarthgap) have no UNPACKDIR and unpack
+# straight into ${WORKDIR}. Same pattern as the wolfssl/wolftpm/wolfboot
+# recipes in this layer.
+python () {
+    if d.getVar('UNPACKDIR', False):
+        d.setVar('S', '${UNPACKDIR}/${BP}')
+    else:
+        d.setVar('S', '${WORKDIR}/git')
+}

@@ -106,14 +106,21 @@ do_stage_external_wolfssl() {
     # (./configure && make) cannot leak host x86 .o/.a files into the cross
     # build: wolfBoot's object paths sit inside this tree, and make would
     # happily reuse an existing .o that is newer than its .c.
-    tar -cf - -C "${WOLFBOOT_WOLFSSL_SRC}" \
+    #
+    # Two steps through an intermediate archive rather than tar|tar: a plain
+    # POSIX shell reports only the extract side of a pipeline, so a create
+    # side that died halfway (read error, vanished file) would go unnoticed
+    # and leave a silently incomplete tree. Run separately, each tar's exit
+    # status aborts the task.
+    rm -f "${WOLFBOOT_WOLFSSL_STAGED_SRC}.tar"
+    tar -cf "${WOLFBOOT_WOLFSSL_STAGED_SRC}.tar" -C "${WOLFBOOT_WOLFSSL_SRC}" \
         --exclude=.git --exclude=.libs \
         --exclude='*.o' --exclude='*.lo' --exclude='*.a' --exclude='*.la' \
         --exclude='*.so' --exclude='*.so.*' \
-        . | tar -xf - -C "${WOLFBOOT_WOLFSSL_STAGED_SRC}"
+        .
+    tar -xf "${WOLFBOOT_WOLFSSL_STAGED_SRC}.tar" -C "${WOLFBOOT_WOLFSSL_STAGED_SRC}"
+    rm -f "${WOLFBOOT_WOLFSSL_STAGED_SRC}.tar"
 
-    # Guard against a half-copied tree: the pipeline above reports only the
-    # extract side's exit status under a plain POSIX shell.
     if [ ! -f "${WOLFBOOT_WOLFSSL_STAGED_SRC}/wolfcrypt/src/asn.c" ]; then
         bbfatal "Failed to stage WOLFBOOT_WOLFSSL_SRC='${WOLFBOOT_WOLFSSL_SRC}':" \
                 "wolfcrypt/src/asn.c is missing from the copy at" \

@@ -40,6 +40,16 @@ WOLFHSM_PORTS ?= "posix"
 
 PV = "1.4.0+git"
 
+# file:// SRC_URI entries land in ${UNPACKDIR} on newer releases (styhead+)
+# and straight in ${WORKDIR} on scarthgap and older, which don't define
+# UNPACKDIR. Resolve wolfhsm.mk from whichever location this release uses.
+python () {
+    if d.getVar('UNPACKDIR', False):
+        d.setVar('WOLFHSM_MK_DIR', '${UNPACKDIR}')
+    else:
+        d.setVar('WOLFHSM_MK_DIR', '${WORKDIR}')
+}
+
 # Nothing to build. See the note above.
 do_configure[noexec] = "1"
 do_compile[noexec] = "1"
@@ -68,10 +78,7 @@ do_install() {
     install -d ${D}${includedir}/wolfhsm
     install -m 0644 ${S}/wolfhsm/*.h ${D}${includedir}/wolfhsm/
 
-    # ${WORKDIR}, not ${UNPACKDIR}: the layer still supports pre-styhead
-    # releases (LAYERSERIES_COMPAT reaches back to sumo) where file:// SRC_URI
-    # entries unpack straight into ${WORKDIR}.
-    install -m 0644 ${WORKDIR}/wolfhsm.mk ${D}${datadir}/wolfhsm/wolfhsm.mk
+    install -m 0644 ${WOLFHSM_MK_DIR}/wolfhsm.mk ${D}${datadir}/wolfhsm/wolfhsm.mk
 }
 
 # ${datadir} is already part of the default SYSROOT_DIRS; named explicitly so
