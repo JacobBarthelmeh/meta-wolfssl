@@ -25,6 +25,14 @@ compile in-tree; it does not build a library. See the note below."
 
 require wolfhsm.inc
 
+# wolfhsm/wh_settings.h includes <wolfssl/options.h> (and wolfcrypt headers
+# below that) unless WOLFHSM_CFG_NO_CRYPTO is defined, so every consumer of
+# the staged headers needs wolfSSL in the sysroot. Declared here rather than
+# left to the consumer so that following README.md is enough. Consumers must
+# still configure wolfSSL with --enable-cryptocb --enable-keygen, and must not
+# compile with -std=c99; see README.md.
+DEPENDS += "virtual/wolfssl"
+
 # For wolfssl_varSet(): the package variables below have to be written with
 # either ':' or '_' depending on the Yocto release, and this layer still
 # supports both (LAYERSERIES_COMPAT reaches back to sumo).
@@ -33,12 +41,10 @@ inherit wolfssl-compatibility
 SRC_URI += "file://wolfhsm.mk"
 
 # Which port/ directories to stage. wolfHSM ships ports for posix, skeleton,
-# microchip, infineon, stmicro, renesas and ti; staging all of them would put
-# a lot of unrelated vendor code in every sysroot. Override in local.conf or a
-# bbappend, e.g. WOLFHSM_PORTS = "posix infineon".
+# armv8m-tz, microchip, infineon, stmicro, renesas and ti; staging all of them
+# would put a lot of unrelated vendor code in every sysroot. Override in
+# local.conf or a bbappend, e.g. WOLFHSM_PORTS = "posix infineon".
 WOLFHSM_PORTS ?= "posix"
-
-PV = "1.4.0+git"
 
 # file:// SRC_URI entries land in ${UNPACKDIR} on newer releases (styhead+)
 # and straight in ${WORKDIR} on scarthgap and older, which don't define

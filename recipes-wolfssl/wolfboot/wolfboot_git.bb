@@ -9,6 +9,12 @@ require wolfboot.inc
 
 inherit deploy wolfssl-compatibility
 
+# Keep this recipe out of 'bitbake world' for the same reason as
+# wolfboot-signed-image.bb: do_compile requires a signing key pair that the
+# user supplies out-of-band, so an unattended world build can only ever fail
+# here. Build it explicitly, or pull it in from an image recipe.
+EXCLUDE_FROM_WORLD = "1"
+
 # Which config/examples/*.config template to build against. Override in
 # local.conf / image recipe to target a different board or boot medium.
 # Examples: zynqmp_sdcard.config, zynqmp.config (QSPI), versal_sdcard.config

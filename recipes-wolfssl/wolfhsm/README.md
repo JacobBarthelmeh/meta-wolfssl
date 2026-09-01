@@ -7,7 +7,7 @@ the sysroot so other recipes can compile them into their own binaries.
 
 | Recipe | Purpose |
 |---|---|
-| `wolfhsm_git.bb` | Stages `wolfhsm/` (headers), `src/` and the selected `port/` directories to `${datadir}/wolfhsm`, plus a `wolfhsm.mk` build fragment. Also installs the headers at `${includedir}/wolfhsm`. |
+| `wolfhsm_1.5.0.bb` | Stages `wolfhsm/` (headers), `src/` and the selected `port/` directories to `${datadir}/wolfhsm`, plus a `wolfhsm.mk` build fragment. Also installs the headers at `${includedir}/wolfhsm`. |
 
 ## Why this stages source instead of building a library
 
@@ -38,6 +38,22 @@ Your Makefile then compiles `$(WOLFHSM_DIR)/src/*.c` and
 `$(WOLFHSM_DIR)/port/posix/*.c` with `-I$(WOLFHSM_DIR) -DWOLFHSM_CFG` and an
 include path pointing at your own `wolfhsm_cfg.h`.
 
+### wolfSSL requirements
+
+`wolfhsm/wh_settings.h` includes `<wolfssl/options.h>` and the wolfCrypt
+headers unless `WOLFHSM_CFG_NO_CRYPTO` is defined, so the recipe carries
+`DEPENDS += "virtual/wolfssl"` and the headers are in your sysroot without you
+asking for them. Two things it cannot do for you:
+
+- wolfSSL must be configured with `--enable-cryptocb --enable-keygen`. Add
+  them in `local.conf`, e.g.
+  `EXTRA_OECONF:append:pn-wolfssl = " --enable-cryptocb --enable-keygen"`.
+- Do not compile the staged sources with a strict `-std=c99` (or `-std=c90`);
+  use `-std=gnu99` or later. Worth stating because upstream's own
+  `examples/posix` Makefiles do exactly that
+  (`wh_posix_server` sets `-std=c99`, `wh_posix_client` sets `CSTD ?=
+  -std=c90`), so copying one of them verbatim into a recipe will not build.
+
 Alternatively, include the staged fragment and use the variables it defines:
 
 ```make
@@ -51,10 +67,10 @@ unchanged from a recipe sysroot, an SDK sysroot, or a plain copy.
 
 ## Selecting ports
 
-wolfHSM ships ports for `posix`, `skeleton`, `microchip`, `infineon`,
-`stmicro`, `renesas` and `ti`. Only `posix` is staged by default; staging all
-of them would put a lot of unrelated vendor code in every sysroot. Override in
-`local.conf` or a bbappend:
+wolfHSM ships ports for `posix`, `skeleton`, `armv8m-tz`, `microchip`,
+`infineon`, `stmicro`, `renesas` and `ti`. Only `posix` is staged by default;
+staging all of them would put a lot of unrelated vendor code in every sysroot.
+Override in `local.conf` or a bbappend:
 
 ```bitbake
 WOLFHSM_PORTS = "posix infineon"
@@ -92,12 +108,12 @@ TOOLCHAIN_TARGET_TASK:append = " wolfhsm-dev"
 
 ## Pinning
 
-`SRCREV` is pinned in `wolfhsm.inc`. Override per-build with:
-
-```bitbake
-SRCREV:pn-wolfhsm = "<sha>"
-```
+`wolfhsm.inc` pins the release with `nobranch=1;rev=<sha>` in `SRC_URI`, the
+same way the other recipes in this layer do, and the `.bb` filename carries
+the matching version. To build a different revision, override the whole
+`SRC_URI` from a bbappend rather than setting `SRCREV`, which has no effect
+when the revision is given in the URL.
 
 The snippets above use the colon override syntax of honister and later. On
 sumo through hardknott, write them with underscores instead
-(`RDEPENDS_${PN}-dev`, `TOOLCHAIN_TARGET_TASK_append`, `SRCREV_pn-wolfhsm`).
+(`RDEPENDS_${PN}-dev`, `TOOLCHAIN_TARGET_TASK_append`).

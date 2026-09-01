@@ -10,11 +10,8 @@ SECTION = "libs"
 LICENSE = "GPL-3.0-only"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=1ebbd3e34237af26da5dc08a4e440464"
 
-# NOTE: pinned to a wolfSSL/wolfHSM main tip at the time of writing. Bump as
-# upstream evolves. Downstream users can override via local.conf:
-#   SRCREV:pn-wolfhsm = "<sha>"
-SRC_URI = "git://github.com/wolfSSL/wolfHSM.git;protocol=https;branch=main"
-SRCREV ?= "4aeecb2c35686bd4daeb40b3537500d15a93aff9"
+# Pinned to the wolfHSM release git tag.
+SRC_URI = "git://github.com/wolfSSL/wolfHSM.git;nobranch=1;protocol=https;rev=dd3ff8835cfdac7b9bede42afe52e729a999f3d7"
 
 # Newer releases (styhead+/wrynose) unpack into ${UNPACKDIR} and name the git
 # checkout after the recipe; oe-core there rejects S = "${WORKDIR}/git"
