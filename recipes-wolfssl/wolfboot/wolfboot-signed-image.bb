@@ -11,6 +11,13 @@ LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/GPL-3.0-only;md5=c79ff39f19dfec
 
 inherit deploy
 
+# Keep this recipe out of 'bitbake world'. It cannot build unattended: it
+# needs a user-supplied WOLFBOOT_SIGNING_KEY, and KERNEL_PN below defaults to
+# linux-xlnx, which makes world fail dependency resolution outright with
+# "Nothing PROVIDES 'linux-xlnx'" on any non-Xilinx configuration. Build it
+# explicitly, or pull it in from an image recipe.
+EXCLUDE_FROM_WORLD = "1"
+
 DEPENDS = "wolfboot-keytools-native"
 
 # REQUIRED: absolute path to the same wolfBoot signing private key used by
